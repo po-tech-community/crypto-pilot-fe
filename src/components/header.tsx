@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+
 import { Link } from "react-router-dom";
+import ThemeToggle from "./ui/toggle";
 
 export default function Header() {
   return (
@@ -34,6 +35,7 @@ export default function Header() {
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
             Get Started
           </Button>
+          <ThemeToggle />
         </div>
       </nav>
     </header>
