@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { isAuthenticated, logout } from "../lib/auth";
 
 export default function Header() {
   return (
@@ -25,15 +26,33 @@ export default function Header() {
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="border-primary text-primary hover:bg-primary/10 bg-transparent"
-          >
-            Sign In
-          </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            Get Started
-          </Button>
+          {!isAuthenticated() ? (
+            <>
+              <Link
+                to="/login"
+                className="border border-primary text-primary hover:bg-primary/10 bg-transparent px-3 py-2 rounded-md"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-md"
+              >
+                Get Started
+              </Link>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                logout();
+                // navigate to home after logout
+                window.location.href = '/';
+              }}
+              className="bg-destructive/90 text-white px-3 py-2 rounded-md"
+            >
+              Log out
+            </button>
+          )}
         </div>
       </nav>
     </header>
