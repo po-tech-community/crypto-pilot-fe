@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signup } from '../lib/auth';
+import { useAuth } from '../lib/AuthContext';
 import { isEmail, minLength } from '../lib/validators';
 import { Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -10,6 +10,7 @@ export default function Signup() {
     const navigate = useNavigate();
     const location = useLocation();
     const from = (location.state as any)?.from?.pathname || '/';
+    const { signup: signupAction } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -26,7 +27,7 @@ export default function Signup() {
         if (password !== confirm) return setError('Passwords do not match');
 
         setLoading(true);
-        const res = await signup(name, email, password);
+        const res = await signupAction(name, email, password);
         setLoading(false);
         if (res.success) {
             const safeFrom = ['/login', '/signup'].includes(from) ? '/' : from;

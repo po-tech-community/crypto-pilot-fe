@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
-import { isAuthenticated, logout } from "../lib/auth";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../lib/AuthContext";
 
 export default function Header() {
+  const navigate = useNavigate();
+  const { authenticated, logout } = useAuth();
+
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -26,32 +29,26 @@ export default function Header() {
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          {!isAuthenticated() ? (
+          {!authenticated ? (
             <>
-              <Link
-                to="/login"
-                className="border border-primary text-primary hover:bg-primary/10 bg-transparent px-3 py-2 rounded-md"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/signup"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-md"
-              >
-                Get Started
-              </Link>
+              <Button asChild variant="outline" size="default">
+                <Link to="/login">Sign In</Link>
+              </Button>
+              <Button asChild variant="default" size="default">
+                <Link to="/signup">Get Started</Link>
+              </Button>
             </>
           ) : (
-            <button
+            <Button
               onClick={() => {
                 logout();
-                // navigate to home after logout
-                window.location.href = '/';
+                navigate('/');
               }}
-              className="bg-destructive/90 text-white px-3 py-2 rounded-md"
+              variant="destructive"
+              size="default"
             >
               Log out
-            </button>
+            </Button>
           )}
         </div>
       </nav>
