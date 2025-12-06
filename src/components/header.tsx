@@ -28,6 +28,13 @@ export default function Header() {
           >
             About
           </Link>
+
+          <Link
+            to="history"
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            History
+          </Link>
         </div>
 
         {/* Desktop Buttons */}
