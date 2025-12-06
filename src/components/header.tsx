@@ -15,9 +15,9 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-8">
           <Link
-            to="/dashboard"  
+            to="/dashboard"
             className="text-foreground hover:text-primary transition-colors"
           >
             Dashboard
@@ -30,7 +30,7 @@ export default function Header() {
           </Link>
 
           <Link
-            to="history"
+            to="/history"
             className="text-foreground hover:text-primary transition-colors"
           >
             History

@@ -5,6 +5,7 @@ import About from "./pages/About";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import History from "./pages/History";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/history" element={<History />} />
           </Routes>
         </MainLayout>
       </BrowserRouter>
