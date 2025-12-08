@@ -1,8 +1,23 @@
 // src/pages/History.tsx
+import { useEffect, useState } from "react";
 
 type TradeSide = "BUY" | "SELL";
 type TradeStatus = "Filled" | "Partially Filled" | "Cancelled";
 
+// Shape of data coming from your backend API
+type HistoryApiEntry = {
+  _id: string;
+  account: string;
+  type: TradeSide;
+  asset: string;
+  amount: number;
+  price?: number | null;
+  status: string; // backend is effectively string, we'll narrow it
+  createdAt: string;
+  updatedAt: string;
+};
+
+// Shape used by your UI table
 type HistoryRow = {
   id: string;
   date: string;
@@ -14,48 +29,7 @@ type HistoryRow = {
   status: TradeStatus;
 };
 
-const MOCK_HISTORY: HistoryRow[] = [
-  {
-    id: "ORD-2025-0001",
-    date: "2025-12-01 14:32",
-    pair: "BTC/USDT",
-    side: "BUY",
-    price: "98,450.00",
-    amount: "0.015",
-    fee: "0.10 USDT",
-    status: "Filled",
-  },
-  {
-    id: "ORD-2025-0002",
-    date: "2025-12-01 14:18",
-    pair: "ETH/USDT",
-    side: "SELL",
-    price: "4,230.50",
-    amount: "0.80",
-    fee: "0.34 USDT",
-    status: "Partially Filled",
-  },
-  {
-    id: "ORD-2025-0003",
-    date: "2025-11-30 19:05",
-    pair: "SOL/USDT",
-    side: "BUY",
-    price: "210.30",
-    amount: "12.0",
-    fee: "0.80 USDT",
-    status: "Filled",
-  },
-  {
-    id: "ORD-2025-0004",
-    date: "2025-11-29 09:47",
-    pair: "BTC/USDT",
-    side: "SELL",
-    price: "96,900.00",
-    amount: "0.010",
-    fee: "0.07 USDT",
-    status: "Cancelled",
-  },
-];
+const API_BASE_URL = "http://localhost:3002/api/history"; // ✅ change port if needed
 
 function StatusBadge({ status }: { status: TradeStatus }) {
   const base =
@@ -83,7 +57,74 @@ function SidePill({ side }: { side: TradeSide }) {
   return <span className={`${base} ${classes}`}>{side}</span>;
 }
 
+// helper to convert backend data → UI row
+function mapApiToRow(entry: HistoryApiEntry): HistoryRow {
+  const date = new Date(entry.createdAt).toLocaleString();
+
+  const pair = `${entry.asset}/USDT`; // simple convention for display
+
+  const price =
+    entry.price != null
+      ? entry.price.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : "—";
+
+  // simple fixed fee for now
+  const fee = "0.10 USDT";
+
+  // narrow the status to our union type; default to "Filled" if unknown
+  const status: TradeStatus =
+    entry.status === "Filled" ||
+    entry.status === "Partially Filled" ||
+    entry.status === "Cancelled"
+      ? entry.status
+      : "Filled";
+
+  return {
+    id: entry._id,
+    date,
+    pair,
+    side: entry.type,
+    price,
+    amount: entry.amount.toString(),
+    fee,
+    status,
+  };
+}
+
 export default function History() {
+  const [rows, setRows] = useState<HistoryRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadHistory = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch(API_BASE_URL);
+      if (!res.ok) {
+        throw new Error("Failed to fetch history");
+      }
+
+      const data: HistoryApiEntry[] = await res.json();
+      setRows(data.map(mapApiToRow));
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Unknown error");
+      }
+    }
+  };
+
+  // run once on mount
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 lg:px-0">
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -91,25 +132,29 @@ export default function History() {
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
             Trade history
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Mock data</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Loaded from backend
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2 text-xs">
-          <button className="rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground">
-            Last 24h
-          </button>
-          <button className="rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground">
-            7 days
-          </button>
-          <button className="rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground">
-            30 days
+          <button
+            onClick={loadHistory}
+            className="rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+          >
+            Refresh
           </button>
         </div>
       </header>
 
+      {loading && (
+        <p className="text-sm text-muted-foreground">Loading history…</p>
+      )}
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
       <section className="overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm backdrop-blur">
         <div className="border-b border-border bg-muted/60 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Recent orders (mock)
+          Recent orders
         </div>
 
         <div className="w-full overflow-x-auto">
@@ -135,7 +180,7 @@ export default function History() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/80">
-              {MOCK_HISTORY.map((row) => (
+              {rows.map((row) => (
                 <tr key={row.id} className="hover:bg-muted/40">
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                     {row.date}
@@ -163,15 +208,23 @@ export default function History() {
                   </td>
                 </tr>
               ))}
+
+              {rows.length === 0 && !loading && !error && (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="px-4 py-6 text-center text-sm text-muted-foreground"
+                  >
+                    No history yet. Seed some data on the backend.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
         <footer className="flex items-center justify-between gap-3 border-t border-border bg-background/60 px-4 py-2 text-xs text-muted-foreground">
-          <span>Showing {MOCK_HISTORY.length} mock orders</span>
-          <button className="ml-auto rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground">
-            View all orders
-          </button>
+          <span>Showing {rows.length} orders</span>
         </footer>
       </section>
     </div>
