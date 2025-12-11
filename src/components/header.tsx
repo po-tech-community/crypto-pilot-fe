@@ -1,4 +1,7 @@
 import { Button } from "@/components/ui/button";
+
+import { Link } from "react-router-dom";
+import ThemeToggle from "./ui/toggle";
 import { Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
@@ -18,7 +21,13 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
+      <div className="hidden md:flex items-center gap-8">
+          <Link
+            to="/dashboard"  
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Dashboard
+          </Link>
           <Link
             to="/about"
             className="text-foreground hover:text-primary transition-colors"
