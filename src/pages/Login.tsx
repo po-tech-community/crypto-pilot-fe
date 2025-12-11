@@ -1,35 +1,37 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../lib/AuthContext';
-import { isEmail, minLength } from '../lib/validators';
+import { loginSchema, type LoginForm } from '../lib/validators';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Field, FieldLabel, FieldError, FieldSet, FieldGroup } from '@/components/ui/field';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   const from = (location.state as any)?.from?.pathname || '/';
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema)
+  });
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!isEmail(email)) return setError('Invalid email format');
-    if (!minLength(password, 8)) return setError('Password must be 8+ chars');
-
-    setLoading(true);
-    const res = await login(email, password);
-    setLoading(false);
+  async function onSubmit(data: LoginForm) {
+    const res = await login(data.email, data.password);
     if (res.success) {
       const safeFrom = ['/login', '/signup'].includes(from) ? '/' : from;
       navigate(safeFrom, { replace: true });
     } else {
-      setError(res.message || 'Login failed');
+      setError('root', { message: res.message || 'Login failed' });
     }
   }
 
@@ -41,34 +43,38 @@ export default function Login() {
             <CardTitle>Log in</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <label className="flex flex-col text-sm">
-                <span className="mb-2">Email</span>
-                <input
-                  className="input bg-transparent border px-3 py-2 rounded-md"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </label>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+              <FieldSet>
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      {...register('email')}
+                    />
+                    {errors.email && <FieldError>{errors.email.message}</FieldError>}
+                  </Field>
 
-              <label className="flex flex-col text-sm">
-                <span className="mb-2">Password</span>
-                <input
-                  className="input bg-transparent border px-3 py-2 rounded-md"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </label>
+                  <Field>
+                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      {...register('password')}
+                    />
+                    {errors.password && <FieldError>{errors.password.message}</FieldError>}
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
 
-              {error && <div className="text-destructive text-sm">{error}</div>}
+              {errors.root && <FieldError>{errors.root.message}</FieldError>}
 
               <CardFooter className="px-0 pt-0">
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Logging in…' : 'Log in'}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? 'Logging in…' : 'Log in'}
                 </Button>
               </CardFooter>
               <div className="text-sm text-muted-foreground mt-2 text-center">
