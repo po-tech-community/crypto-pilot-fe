@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ui/toggle";
-import { Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 
 export default function Header() {
@@ -59,6 +59,7 @@ export default function Header() {
               onClick={() => {
                 logout();
                 navigate("/");
+                navigate('/');
               }}
               variant="destructive"
               size="default"
