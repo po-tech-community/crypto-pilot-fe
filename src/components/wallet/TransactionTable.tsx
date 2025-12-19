@@ -1,5 +1,14 @@
+import { Button } from "../ui/button";
 import type { Tx } from "./types";
-
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 export function TransactionTable({
   txs,
   loading,
@@ -20,11 +29,13 @@ export function TransactionTable({
 
         {onRefresh && (
           <div className="flex flex-wrap gap-2 text-xs">
-            <button
+            <Button
+              type="button"
+              variant="outline"
               onClick={onRefresh}
               className="rounded-full border border-border bg-background/60 px-3 py-1.5 font-medium hover:bg-accent hover:text-accent-foreground">
               Refresh
-            </button>
+            </Button>
           </div>
         )}
       </header>
@@ -38,44 +49,44 @@ export function TransactionTable({
         </div>
 
         <div className="w-full overflow-x-auto">
-          <table className="min-w-full divide-y divide-border text-sm">
-            <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="whitespace-nowrap px-4 py-3 text-left">Time</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left">ID</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left">Type</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right">Amount USD</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/80">
+          <Table className="min-w-full divide-y divide-border text-sm">
+            <TableHeader className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+              <TableRow>
+                <TableHead className="whitespace-nowrap px-4 py-3 text-left">Time</TableHead>
+                <TableHead className="whitespace-nowrap px-4 py-3 text-left">ID</TableHead>
+                <TableHead className="whitespace-nowrap px-4 py-3 text-left">Type</TableHead>
+                <TableHead className="whitespace-nowrap px-4 py-3 text-right">Amount USD</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-border/80">
               {txs.map(t => (
-                <tr key={t.id} className="hover:bg-muted/40">
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{t.date}</td>
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{t.id}</td>
-                  <td
+                <TableRow key={t.id} className="hover:bg-muted/40">
+                  <TableCell className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{t.date}</TableCell>
+                  <TableCell className="whitespace-nowrap px-4 py-3 font-mono text-xs">{t.id}</TableCell>
+                  <TableCell
                     className={
                       "whitespace-nowrap px-4 py-3 " +
                       (t.type === "Deposit" ? "text-green-600" : "text-red-600")
                     }>
                     {t.type}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                     <span className="inline-flex w-full justify-end gap-1">
                       <span className="w-3 text-right">$</span>
                       <span className="tabular-nums">{t.amount.toFixed(2)}</span>
                     </span>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
               {txs.length === 0 && !loading && !error && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
                     No history yet. Seed some data on the backend.
-                  </td>
+                  </TableCell>
                 </tr>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
         <footer className="flex items-center justify-between gap-3 border-t border-border bg-background/60 px-4 py-2 text-xs text-muted-foreground">
           <span>Showing {txs.length} transactions</span>
