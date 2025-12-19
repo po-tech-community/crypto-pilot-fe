@@ -1,19 +1,26 @@
-import ProfileCard from "../components/profile/ProfileCard";
+import { useQuery } from "@tanstack/react-query";
+import { getProfile } from "@/api/profile";
+import ProfileCard from "@/components/profile/ProfileCard";
+import type { Profile } from "@/types/profile";
 
-export default function Profile() {
-  const profile = {
-    name: "Mai Long Vuong",
-    email: "example@gmail.com",
-    username: "mai.dev",
-    country: "United States",
-    phone: "+1 (123) 456 789",
-    joinDate: "2025-11-28",
-    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=MLV",
-  };
+export default function ProfilePage() {
+  const { data: profile, isLoading: profileLoading, error: profileError } = useQuery<Profile>({
+    queryKey: ["profile"],
+    queryFn: getProfile,
+  });
+
+  if (profileLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (profileError || !profile) {
+    return <div>Error loading profile</div>;
+  }
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-10">
-      <h1 className="text-3xl font-bold mb-6">Your Profile</h1>
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">{profile.email}</p>
+
       <ProfileCard profile={profile} />
     </div>
   );
