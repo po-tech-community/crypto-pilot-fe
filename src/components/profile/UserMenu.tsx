@@ -3,27 +3,31 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { useNavigate } from "react-router-dom";
 import type { Profile } from "@/types/profile";
 
+const getFullName = (p: Profile) =>
+  `${p.firstName} ${p.lastName}`.trim();
+
+const getInitials = (p: Profile) =>
+  getFullName(p)
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("");
+    
 export default function UserMenu({ profile }: { profile: Profile }) {
   const nav = useNavigate();
-  const initials = profile.name
-  .split(" ")
-  .map((n) => n[0])
-  .join("");
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar className="w-8 h-8">
-            <AvatarImage src={profile.avatar || undefined} />
-            <AvatarFallback>{initials}</AvatarFallback>
+          <AvatarImage src={profile.avatar} />
+          <AvatarFallback>{getInitials(profile)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent>
         <DropdownMenuItem onClick={() => nav("/profile")}>
           Profile
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => nav("/wallet")}>
-          Wallet
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

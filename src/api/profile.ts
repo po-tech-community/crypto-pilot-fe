@@ -1,50 +1,54 @@
 import type { Profile } from "@/types/profile";
 
-const adaptProfile = (data: any): Profile => {
-  return {
-    ...data,
-    country:
-      typeof data?.country === "string"
-        ? data.country
-        : data?.country?.name ?? "",
-  };
-};
+const API_BASE = "http://localhost:3000"; 
 
-//Get current user profile
 export const getProfile = async (): Promise<Profile> => {
-  const res = await fetch("/api/profile/get-me", {
-    credentials: "include",
+  const token = localStorage.getItem("accessToken");
+  if (!token) throw new Error("No token in localStorage");
+
+  const res = await fetch(`${API_BASE}/api/profile/get-me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
   });
 
+  const json = await res.json();
+
   if (!res.ok) {
-    throw new Error("Failed to fetch profile");
+    throw new Error(json?.message || "Failed to fetch profile");
   }
 
-  const { data } = await res.json();
-  return adaptProfile(data);
+  return json.data; 
 };
 
-// Update current user profile
-export const updateProfile = async (payload: {
+export async function updateProfile(data: {
   firstName: string;
   lastName: string;
   avatar?: string;
   phone?: string;
-  countryId?: string;
-}): Promise<Profile> => {
-  const res = await fetch("/api/profile/update", {
+}) {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    throw new Error("No access token");
+  }
+
+  const res = await fetch(`${API_BASE}/api/profile/update`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-    credentials: "include",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
 
+  const json = await res.json();
+
   if (!res.ok) {
-    throw new Error("Failed to update profile");
+    throw new Error(json.message || "Failed to update profile");
   }
 
-  const { data } = await res.json();
-  return adaptProfile(data);
-};
+  return json.data as Profile;
+}

@@ -1,9 +1,12 @@
 export interface Profile {
-  name: string;
-  email: string;
-  username: string;
-  country?: string;
+  userId: string;
+
+  firstName: string;
+  lastName: string;
+
+  avatar?: string;
   phone?: string;
-  joinDate: string;
-  avatar: string;
+
+  countryId?: string; 
+  joinDate: string;   
 }
