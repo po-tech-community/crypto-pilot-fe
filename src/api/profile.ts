@@ -7,20 +7,25 @@ export const getProfile = async (): Promise<Profile> => {
   if (!token) throw new Error("No token in localStorage");
 
   const res = await fetch(`${API_BASE}/api/profile/get-me`, {
-    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
     },
   });
 
   const json = await res.json();
-
   if (!res.ok) {
     throw new Error(json?.message || "Failed to fetch profile");
   }
 
-  return json.data; 
+  const data = json.data;
+
+  return {
+    name: data.name?.trim() || "User",
+    phone: data.phone?.trim() || undefined,
+    country: data.country || undefined,
+    joinDate: data.joinDate,
+    avatar: data.avatar?.trim() || undefined, 
+  };
 };
 
 export async function updateProfile(data: {
