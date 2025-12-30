@@ -34,14 +34,3 @@ export function useConfirmationCountdown(
 
   return { estimatedProgress, remainingSec };
 }
-
-
-export function getExplorerUrl(network: string, txHash: string) {
-    const bases: Record<string, string> = {
-      bitcoin: "https://mempool.space/tx/",
-      ethereum: "https://etherscan.io/tx/",
-      tron: "https://tronscan.org/#/transaction/",
-      bsc: "https://bscscan.com/tx/",
-    };
-    return bases[network] ? `${bases[network]}${txHash}` : "";
-  }

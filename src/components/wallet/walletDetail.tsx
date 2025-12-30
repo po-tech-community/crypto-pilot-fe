@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useConfirmationCountdown } from "@/api/wallet/ultilities";
+import type { Deposit } from "@/types/wallet";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Copy, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Copy, ExternalLink, Loader2, XCircle } from "lucide-react";
-import type { Deposit } from "@/types/wallet";
-import { getExplorerUrl, useConfirmationCountdown } from "@/api/wallet/ultilities";
-import { ASSETS } from "@/api/wallet/constant";
-import { Progress } from "../ui/progress";
+import { motion } from "framer-motion";
+import { useRef, useState } from "react";
 
 function StatusBadge({ status }: { status: Deposit["status"] }) {
   if (status === "COMPLETED") return <Badge>completed</Badge>;
@@ -27,25 +26,20 @@ function shortenHash(hash: string, length = 10) {
   return `${hash.slice(0, length)}...${hash.slice(-length)}`;
 }
 
-export function DepositDetailsCard({
-  deposit,
-  requiredConfirmations,
-  estimatedBlockTimeSec,
-}: {
-  deposit: Deposit | null;
-  requiredConfirmations: number;
-  estimatedBlockTimeSec: number;
-}) {
+export function DepositDetailsCard({ deposit }: { deposit: Deposit | null }) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const confirmations = deposit?.confirmations ?? 0;
+  const required = deposit?.networkMeta?.requiredConfirmations ?? 0;
+  const blockTime = deposit?.networkMeta?.estimatedBlockTimeSec ?? 60;
+  const hasTx = Boolean(deposit?.txHash);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        window.clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
+  const { estimatedProgress, remainingSec } = useConfirmationCountdown(
+    confirmations,
+    required,
+    blockTime,
+    hasTx
+  );
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -56,61 +50,30 @@ export function DepositDetailsCard({
     } catch {}
   };
 
-  const confirmations = deposit?.confirmations ?? 0;
-  const requiredConfirmation = ASSETS .find(a => a.symbol === deposit?.asset) ?.networks.find(n => n.key === deposit?.network) ?.requiredConfirmations ?? 1;
-  const estimatedBlockTimeSecs = ASSETS.find(a => a.symbol === deposit?.asset)?.estimatedBlockTimeSec ?? 60;
-
-  const hasTx = Boolean(deposit?.txHash);
-
-  const { estimatedProgress, remainingSec } =
-    useConfirmationCountdown(
-      confirmations,
-      requiredConfirmation,
-      estimatedBlockTimeSecs,
-      hasTx
-    );
-
-  const progress = useMemo(() => {
-    if (!deposit) return 0;
-
-    if (confirmations > 0) {
-      return Math.min(
-        100,
-        (confirmations / requiredConfirmations) * 100
-      );
-    }
-
-    return estimatedProgress;
-  }, [
-    deposit,
-    confirmations,
-    requiredConfirmations,
-    estimatedProgress,
-  ]);
-
   if (!deposit) {
     return (
-      <Card className="rounded-2xl">
-        <CardHeader>
-          <CardTitle>deposit details</CardTitle>
-        </CardHeader>
+      <Card>
         <CardContent>
-          <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-            create a deposit to see address and confirmations
-          </div>
+        <Alert>
+            <AlertDescription>
+              Deposit or click history to view details
+            </AlertDescription>
+          </Alert>
+
         </CardContent>
       </Card>
     );
   }
 
-  const explorerUrl = deposit.txHash
-    ? getExplorerUrl(deposit.network, deposit.txHash)
-    : "";
+  const progress =
+    confirmations > 0
+      ? Math.min(100, (confirmations / required) * 100)
+      : estimatedProgress;
 
   return (
     <Card className="rounded-2xl">
       <CardHeader>
-        <CardTitle>deposit details</CardTitle>
+        <CardTitle>Deposit Detail</CardTitle>
       </CardHeader>
 
       <CardContent>
@@ -118,34 +81,24 @@ export function DepositDetailsCard({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="space-y-4"
-        >
+          className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-semibold">
-                  {deposit.asset} deposit
+                  {deposit.asset} Deposit
                 </h3>
                 <StatusBadge status={deposit.status} />
               </div>
               <p className="text-sm text-muted-foreground">
-                network: {deposit.network}
+                Network: {deposit.network}
               </p>
             </div>
             <StatusIcon status={deposit.status} />
           </div>
 
-          <Alert>
-            <AlertTitle>
-              send only {deposit.asset} via {deposit.network}
-            </AlertTitle>
-            <AlertDescription>
-              sending other assets or using different networks can cause permanent loss
-            </AlertDescription>
-          </Alert>
-
           <div className="rounded-2xl border p-3">
-            <p className="text-xs text-muted-foreground">deposit address</p>
+            <p className="text-xs text-muted-foreground">Deposit Address</p>
             <div className="mt-1 flex justify-between gap-2">
               <code className="break-all text-sm">{deposit.address}</code>
               <Button size="sm" variant="secondary" onClick={() => copyToClipboard(deposit.address)}>
@@ -156,44 +109,36 @@ export function DepositDetailsCard({
 
           <div className="rounded-2xl border p-3">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>confirmations</span>
-              <span>{confirmations} / {requiredConfirmations}</span>
+              <span>Confirmations</span>
+              <span>{confirmations} / {required}</span>
             </div>
             <Progress value={progress} className="mt-2" />
             <p className="mt-2 text-xs text-muted-foreground">
               {deposit.status === "COMPLETED"
-                ? "successfully completed"
-                : confirmations > 0 && confirmations < requiredConfirmations
-                  ? `time remaining: ~${Math.ceil(remainingSec / 60)} min`
+                ? "Successfully Completed"
+                : confirmations > 0 && confirmations < required
+                  ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
                   : hasTx
-                    ? `time remaining: ~${Math.ceil(remainingSec / 60)} min`
+                    ? `Time Remaining: ~${Math.ceil(remainingSec / 60)} min`
                     : "waiting for transaction"}
             </p>
           </div>
 
           <div className="rounded-2xl border p-3">
-            <p className="text-xs text-muted-foreground">amount</p>
+            <p className="text-xs text-muted-foreground">Amount</p>
             <p>{deposit.amount}</p>
           </div>
-
           <div className="rounded-2xl border p-3">
-            <p className="text-xs text-muted-foreground">transaction hash</p>
+            <p className="text-xs text-muted-foreground">Transaction Hash</p>
             {deposit.txHash ? (
-              <a
-                href={explorerUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-primary underline"
-              >
-                {shortenHash(deposit.txHash, 12)}
-              </a>
+                <p className="text-xs text-muted-foreground">{shortenHash(deposit.txHash, 12)}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">not detected yet</p>
+              <p className="text-sm text-muted-foreground">Not Generated Yet</p>
             )}
           </div>
 
           <p className="text-xs text-muted-foreground">
-            created: {new Date(deposit.createdAt).toLocaleString()}
+            Created: {new Date(deposit.createdAt).toLocaleString()}
           </p>
         </motion.div>
       </CardContent>

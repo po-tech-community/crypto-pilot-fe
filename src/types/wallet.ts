@@ -1,5 +1,26 @@
 export type DepositStatus = "PENDING" | "COMPLETED" | "FAILED";
 
+export type NetworkKey =
+  | "bitcoin"
+  | "ethereum"
+  | "bsc"
+  | "xrp"
+  | "solana";
+
+export type NetworkConfig = {
+  key: NetworkKey;
+  label: string;
+  addressFormat: "btc" | "evm" | "xrp" | "solana";
+  requiredConfirmations: number;
+  estimatedBlockTimeSec: number;
+};
+
+export type Asset = {
+  symbol: string;
+  name: string;
+  minDeposit: string;
+  networks: NetworkConfig[];
+};
 export type Deposit = {
   _id: string;
   userId: string;
@@ -12,8 +33,16 @@ export type Deposit = {
   status: DepositStatus;
   createdAt: string;
   updatedAt: string;
+  networkMeta: Pick<
+    NetworkConfig,
+    "requiredConfirmations" | "estimatedBlockTimeSec">;
 
 
+};
+
+export type ListDepositParams = {
+  limit: number;
+  offset: number;
 };
 
 export type ListDeposit = {
@@ -26,17 +55,3 @@ export type CreateDeposit = {
   amount?: string;
 };
 
-export type AssetNetwork = {
-    key: string;
-    label: string;
-    addressFormat: "btc" | "evm" | "tron";
-    requiredConfirmations: number;
-  };
-  
-export type Asset = {
-    symbol: string;
-    name: string;
-    minDeposit: string;
-    estimatedBlockTimeSec: number;
-    networks: AssetNetwork[];
-  };

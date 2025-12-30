@@ -1,14 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import type { Deposit, ListDeposit } from "@/types/wallet";
-
-
-const ASSETS = [
-  { symbol: "BTC", name: "Bitcoin" },
-  { symbol: "ETH", name: "Ethereum" },
-  { symbol: "USDT", name: "Tether" },
-];
+import { Loader2 } from "lucide-react";
+import type { Deposit } from "@/types/wallet";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 function StatusBadge({ status }: { status: Deposit["status"] }) {
   if (status === "COMPLETED") {
@@ -22,10 +24,24 @@ function StatusBadge({ status }: { status: Deposit["status"] }) {
 
 export function WalletOverview({
   deposits,
+  assets,
   onOpenDeposit,
+  hasNext,
+  hasPrev,
+  onNext,
+  onPrev,
+  isLoading,
+  currentPage
 }: {
   deposits?: Deposit[];
+  assets: { symbol: string; name: string }[];
   onOpenDeposit: (id: string) => void;
+  hasNext: boolean;
+  hasPrev: boolean;
+  onNext: () => void;
+  onPrev: () => void;
+  isLoading?: boolean;
+  currentPage: number;
 }) {
   const depositsList = Array.isArray(deposits) ? deposits : [];
 
@@ -36,74 +52,106 @@ export function WalletOverview({
       return acc;
     }, {} as Record<string, string>);
 
+  const assetsWithBalance = assets.filter(
+    (a) => Number(balances[a.symbol] || 0) > 0
+  );
+
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <Card className="rounded-2xl lg:col-span-2">
+    <div className="grid gap-4 lg:grid-cols-1">
+      <Card className="rounded-2xl">
         <CardHeader>
-          <CardTitle>balances</CardTitle>
+          <CardTitle>Balances</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid gap-3 md:grid-cols-3">
-            {ASSETS.map((a) => (
-              <Card key={a.symbol} className="rounded-2xl">
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">{a.symbol}</p>
-                  <p className="text-xl font-semibold">{balances[a.symbol] || "0"}</p>
-                  <p className="text-xs text-muted-foreground">{a.name}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {assetsWithBalance.length === 0 ? (
+            <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
+              No balance yet. Complete deposits to see your balance.
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-3">
+              {assetsWithBalance.map((a) => (
+                <Card key={a.symbol} className="rounded-2xl">
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground">{a.symbol}</p>
+                    <p className="text-xl font-semibold">{balances[a.symbol]}</p>
+                    <p className="text-xs text-muted-foreground">{a.name}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           <Separator />
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">latest deposits</p>
-              <p className="text-xs text-muted-foreground">click to view details</p>
+              <p className="text-sm font-medium">Latest Deposits</p>
+              <p className="text-xs text-muted-foreground">Click to view details</p>
             </div>
 
-            <div className="space-y-2">
-              {depositsList.slice(0, 5).map((d) => (
-                <button
-                  key={d._id}
-                  onClick={() => onOpenDeposit(d._id)}
-                  className="w-full rounded-2xl border p-3 text-left transition hover:bg-muted/40"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{d.asset}</span>
-                        <span className="text-xs text-muted-foreground">{d.network}</span>
-                        <StatusBadge status={d.status} />
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {depositsList.map((d) => (
+                    <button
+                      key={d._id}
+                      onClick={() => onOpenDeposit(d._id)}
+                      className="w-full rounded-2xl border p-3 text-left transition hover:bg-muted/40"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{d.asset}</span>
+                            <span className="text-xs text-muted-foreground">{d.network}</span>
+                            <StatusBadge status={d.status} />
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {new Date(d.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className="text-sm">{d.amount}</span>
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {new Date(d.createdAt).toLocaleString()}
-                      </p>
+                    </button>
+                  ))}
+                  {depositsList.length === 0 && (
+                    <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
+                      no deposits yet. switch to deposit tab to create one.
                     </div>
-                    <span className="text-sm">{d.amount}</span>
-                  </div>
-                </button>
-              ))}
-              {depositsList.length === 0 && (
-                <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-                  no deposits yet. switch to deposit tab to create one.
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card className="rounded-2xl">
-        <CardHeader>
-          <CardTitle>safety tips</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>addresses are generated by the backend</p>
-          <p>network mismatch causes permanent loss</p>
-          <p>confirmations update automatically</p>
-          <p>tx hash appears once detected on chain</p>
+                {(hasPrev || hasNext) && (
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={onPrev}
+                          aria-disabled={!hasPrev}
+                          className={!hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+
+                      <PaginationItem>
+                        <span className="text-sm px-4">{currentPage}</span>
+                      </PaginationItem>
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={onNext}
+                          aria-disabled={!hasNext}
+                          className={!hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
