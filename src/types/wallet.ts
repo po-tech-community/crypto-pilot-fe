@@ -5,7 +5,8 @@ export type NetworkKey =
   | "ethereum"
   | "bsc"
   | "xrp"
-  | "solana";
+  | "solana"
+  | "";
 
 export type NetworkConfig = {
   key: NetworkKey;
@@ -55,3 +56,50 @@ export type CreateDeposit = {
   amount?: string;
 };
 
+
+export type WithdrawStatus =  'PENDING'| 'PROCESSING'| 'COMPLETED'| 'FAILED'| 'CANCELLED'
+
+
+export type Withdraw = {
+  _id: string;
+  userId: string;
+  asset: string;
+  network: NetworkKey;
+  address: string;
+  amount: string;
+  fee: number;
+  memo?: string | null;
+  txHash?: string | null;
+  confirmations: number;
+  status: string;
+  createdAt: Date;
+  processedAt?: Date | null;
+  completedAt?: Date | null;
+  networkMeta: Pick<
+    NetworkConfig,
+    "requiredConfirmations" | "estimatedBlockTimeSec">;
+}
+export type WithdrawListResponse = {
+  data: Withdraw[];
+  limit: number;
+  offset: number;
+};
+export type ListWithdrawParams = {
+  limit: number;
+  offset: number;
+};
+
+export type CreateWithdraw = {
+  asset: string;
+  network: NetworkKey;
+  address: string;
+  amount: string;
+  fee: number;
+  memo?: string | null;
+  txHash?: string | null;
+  confirmations: number;
+  status: string;
+  createdAt: Date;
+  processedAt?: Date | null;
+  completedAt?: Date | null;
+};

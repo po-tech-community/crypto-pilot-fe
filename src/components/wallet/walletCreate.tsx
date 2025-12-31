@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Asset, NetworkKey } from "@/types/wallet";
 import { Loader2 } from "lucide-react";
 
@@ -50,7 +49,7 @@ export function CreateDepositCard({
             <label className="text-sm font-medium">Asset</label>
             <Select value={assetSymbol} onValueChange={setAssetSymbol}>
               <SelectTrigger className="rounded-2xl">
-                <SelectValue placeholder="select asset" />
+                <SelectValue placeholder="Select asset" />
               </SelectTrigger>
               <SelectContent>
                 {assets.map(a => (
@@ -65,7 +64,7 @@ export function CreateDepositCard({
           <div className="space-y-2">
             <label className="text-sm font-medium">Network</label>
             <Select value={networkKey} onValueChange={(v: NetworkKey) => setNetworkKey(v)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-2xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -78,7 +77,7 @@ export function CreateDepositCard({
             </Select>
 
             <p className="text-xs text-muted-foreground">
-              Required Confirmations: {network.requiredConfirmations}
+              Required confirmations: {network.requiredConfirmations}
             </p>
           </div>
 

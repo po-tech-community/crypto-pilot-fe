@@ -2,28 +2,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
-import type { Deposit } from "@/types/wallet";
+import type { Deposit, DepositStatus, Withdraw, WithdrawStatus } from "@/types/wallet";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-function StatusBadge({ status }: { status: Deposit["status"] }) {
+
+function StatusBadge({ status }: { status: string }) {
   if (status === "COMPLETED") {
-    return <Badge className="rounded-full">completed</Badge>;
+    return <Badge className="rounded-full bg-green-500">Completed</Badge>;
   }
   if (status === "FAILED") {
-    return <Badge variant="destructive" className="rounded-full">failed</Badge>;
+    return <Badge variant="destructive" className="rounded-full">Failed</Badge>;
   }
-  return <Badge variant="secondary" className="rounded-full">pending</Badge>;
+  return <Badge variant="secondary" className="rounded-full">Pending</Badge>;
+}
+
+function StatusType({ type }: { type: string }) {
+  return <Badge variant="outline" className="rounded-full">
+
+    {type === 'deposit' ? 'Deposit' : 'Withdraw'}
+
+  </Badge>;
 }
 
 export function WalletOverview({
   deposits,
+  withdraw,
   assets,
   onOpenDeposit,
   hasNext,
@@ -34,6 +43,7 @@ export function WalletOverview({
   currentPage
 }: {
   deposits?: Deposit[];
+  withdraw?: Withdraw[];
   assets: { symbol: string; name: string }[];
   onOpenDeposit: (id: string) => void;
   hasNext: boolean;
@@ -43,7 +53,21 @@ export function WalletOverview({
   isLoading?: boolean;
   currentPage: number;
 }) {
-  const depositsList = Array.isArray(deposits) ? deposits : [];
+
+  type DepositWithType = Deposit & { type: 'deposit' };
+  type WithdrawWithType = Withdraw & { type: 'withdraw' };
+
+  type Transaction = DepositWithType | WithdrawWithType;
+
+  const depositsList: DepositWithType[] = Array.isArray(deposits) 
+  ? deposits.map(d => ({ ...d, type: 'deposit' as const, status: d.status as DepositStatus }))
+  : [];
+
+const withdrawList: WithdrawWithType[] = Array.isArray(withdraw)
+  ? withdraw.map(w => ({ ...w, type: 'withdraw' as const, status: w.status as WithdrawStatus }))
+  : [];
+
+  const allTransactions: Transaction[] = [...depositsList, ...withdrawList];
 
   const balances = depositsList
     .filter((d) => d.status === "COMPLETED")
@@ -86,7 +110,6 @@ export function WalletOverview({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Latest Deposits</p>
-              <p className="text-xs text-muted-foreground">Click to view details</p>
             </div>
 
             {isLoading ? (
@@ -96,7 +119,7 @@ export function WalletOverview({
             ) : (
               <>
                 <div className="space-y-2">
-                  {depositsList.map((d) => (
+                  {allTransactions.map((d) => (
                     <button
                       key={d._id}
                       onClick={() => onOpenDeposit(d._id)}
@@ -107,6 +130,7 @@ export function WalletOverview({
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{d.asset}</span>
                             <span className="text-xs text-muted-foreground">{d.network}</span>
+                            <StatusType type={d.type} />
                             <StatusBadge status={d.status} />
                           </div>
                           <p className="mt-1 text-xs text-muted-foreground">
